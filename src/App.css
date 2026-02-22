@@ -1,0 +1,230 @@
+/* ==============================
+   APP LAYOUT - defined in index.css
+   Only keep page-specific styles here
+   ============================== */
+
+/* Logo */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+  padding-left: 12px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background-color: var(--bloom-lavender);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: 'Outfit';
+}
+
+.logo-text {
+  font-family: 'Outfit';
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--bloom-text-main);
+}
+
+/* Nav Menu */
+.nav-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--bloom-radius-sm);
+  background: none;
+  color: var(--bloom-text-muted);
+  font-weight: 500;
+  text-align: left;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background-color: rgba(139, 92, 246, 0.1);
+  color: var(--bloom-lavender);
+}
+
+.nav-item .icon {
+  font-size: 18px;
+}
+
+.btn-session-plus {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--bloom-lavender);
+  color: white;
+  border-radius: var(--bloom-radius-md);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+}
+
+/* Dashboard View */
+.welcome-header {
+  margin: 32px 0;
+}
+
+.welcome-header h1 {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.stat-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--bloom-text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-family: 'Outfit';
+}
+
+.stat-change {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat-change.positive {
+  color: var(--bloom-mint);
+}
+
+.badge-peach {
+  background-color: var(--bloom-peach);
+  border: none;
+}
+
+/* Content Cards */
+.content-card {
+  padding: 24px;
+  min-height: 300px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* Chart Styles */
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding-top: 20px;
+}
+
+.chart-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 60px;
+}
+
+.chart-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: height 1s ease-out;
+}
+
+.bar-label {
+  font-size: 12px;
+  color: var(--bloom-text-muted);
+}
+
+/* Agenda List */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: var(--bloom-radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.session-time {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bloom-lavender);
+  min-width: 45px;
+}
+
+.patient-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.session-type {
+  font-size: 12px;
+}
+
+.session-status {
+  margin-left: auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 100px;
+}
+
+.status-confirmado {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--bloom-mint);
+}
+
+.status-pendente {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--bloom-peach);
+}
+
+/* IA Insights */
+.ai-insights-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 20px 24px;
+  border-radius: var(--bloom-radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-badge {
+  display: inline-block;
+  background-color: var(--bloom-lavender);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
