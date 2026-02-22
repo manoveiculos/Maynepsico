@@ -1,19 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
+// Fallback hardcoded para quando .env não está disponível (ex: build na Hostinger)
+// A anon key é PÚBLICA por design — a segurança vem das RLS policies no Supabase
+const FALLBACK_URL = 'https://lfwvhfncegshxuljwppc.supabase.co'
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxmd3ZoZm5jZWdzaHh1bGp3cHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTE2NDUsImV4cCI6MjA3MTAyNzY0NX0.qU4x25I0ZlXD_Bk74vrrKJy063sfnKGevRc0xf9W2uA'
 
-const isConfigured = supabaseUrl && supabaseAnonKey && supabaseUrl !== 'undefined' && supabaseAnonKey !== 'undefined';
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL?.trim()) || FALLBACK_URL
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()) || FALLBACK_KEY
 
-if (!isConfigured) {
-    const msg = 'ERRO DE CONFIGURAÇÃO: As chaves do Supabase não foram encontradas no arquivo .env ou estão vazias.'
-    console.error(msg)
-}
-
-// Inicializa com valores vazios se não estiver configurado para evitar erro fatal de módulo
 export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder',
+    supabaseUrl,
+    supabaseAnonKey,
     {
         auth: {
             persistSession: true,
