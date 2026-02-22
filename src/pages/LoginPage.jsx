@@ -30,40 +30,60 @@ const LoginPage = () => {
         setLoading(true);
         setStatusMessage('Conectando...');
 
-        const statusTimer = setTimeout(() => {
-            if (loading) setStatusMessage('O banco de dados está acordando...');
-        }, 5000);
+        const maxRetries = 3;
+        let attempt = 0;
 
-        try {
-            if (isSignUp) {
-                setStatusMessage('Criando sua conta...');
-                await signUp(form.email, form.password, form.fullName);
-                setSuccess('Conta criada! Verifique seu email para confirmar o cadastro.');
-                setIsSignUp(false);
-            } else {
-                setStatusMessage('Autenticando...');
-                await signIn(form.email, form.password);
-                navigate('/dashboard');
-            }
-        } catch (err) {
-            console.error('Erro de login:', err);
-            const msg = (err.message || 'Erro inesperado').toLowerCase();
+        while (attempt < maxRetries) {
+            attempt++;
+            try {
+                if (attempt > 1) {
+                    setStatusMessage(`Tentativa ${attempt}/${maxRetries} — Acordando o banco de dados...`);
+                    await new Promise(r => setTimeout(r, 2000));
+                }
 
-            if (msg.includes('hibernação') || msg.includes('timeout')) {
-                setError('O banco de dados demorou para responder. Tente clicar em "Entrar" novamente, ele deve acordar em instantes.');
-            } else if (msg.includes('invalid login')) {
-                setError('Email ou senha incorretos.');
-            } else if (msg.includes('already registered')) {
-                setError('Este email já está cadastrado.');
-            } else {
-                setError(err.message || 'Erro ao conectar ao servidor.');
+                if (isSignUp) {
+                    setStatusMessage('Criando sua conta...');
+                    await signUp(form.email, form.password, form.fullName);
+                    setSuccess('Conta criada! Verifique seu email para confirmar o cadastro.');
+                    setIsSignUp(false);
+                    setLoading(false);
+                    setStatusMessage('');
+                    return;
+                } else {
+                    setStatusMessage(attempt > 1 ? 'Reconectando...' : 'Autenticando...');
+                    await signIn(form.email, form.password);
+                    navigate('/dashboard');
+                    return;
+                }
+            } catch (err) {
+                console.error(`Erro de login (tentativa ${attempt}):`, err);
+                const msg = (err.message || 'Erro inesperado').toLowerCase();
+
+                // Erros de rede/hibernação - tentar novamente
+                if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('timeout') || msg.includes('hibernação')) {
+                    if (attempt < maxRetries) {
+                        continue; // Tenta novamente automaticamente
+                    }
+                    setError('O banco de dados está acordando. Por favor, aguarde 10 segundos e clique em "Entrar" novamente.');
+                }
+                // Erros de autenticação - não tentar novamente
+                else if (msg.includes('invalid login')) {
+                    setError('Email ou senha incorretos.');
+                } else if (msg.includes('already registered')) {
+                    setError('Este email já está cadastrado.');
+                } else if (msg.includes('email not confirmed')) {
+                    setError('Verifique seu email para confirmar o cadastro antes de entrar.');
+                } else {
+                    setError(err.message || 'Erro ao conectar ao servidor.');
+                }
+                break; // Sai do loop para erros que não devem ser retentados
             }
-        } finally {
-            clearTimeout(statusTimer);
-            setLoading(false);
-            setStatusMessage('');
         }
+
+        setLoading(false);
+        setStatusMessage('');
     };
+
 
     const inputStyle = {
         width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px',
