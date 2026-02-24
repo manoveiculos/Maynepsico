@@ -21,7 +21,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/dashboard' },
         { icon: <Users size={20} />, label: 'Pacientes', path: '/pacientes' },
         { icon: <Calendar size={20} />, label: 'Agenda', path: '/agenda' },
+        { icon: <PlusCircle size={20} />, label: 'Agendamentos Site', path: '/validacao-site' },
         { icon: <DollarSign size={20} />, label: 'Financeiro', path: '/financeiro' },
+        { icon: <FileText size={20} />, label: 'Documentos', path: '/documentos' },
         { icon: <FileText size={20} />, label: 'Relatórios', path: '/relatorios' },
     ];
 
@@ -115,7 +117,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '10px', fontWeight: 'bold', flexShrink: 0
                         }}>MM</div>
-                        <span className="user-info" style={{ fontSize: '13px', fontWeight: '600' }}>Mayne</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span className="user-info" style={{ fontSize: '13px', fontWeight: '600' }}>Dra. Mayne</span>
+                            <span style={{ fontSize: '10px', color: 'var(--bloom-text-muted)' }}>CRP 12/29287</span>
+                        </div>
                     </div>
                     <LogOut
                         size={18}

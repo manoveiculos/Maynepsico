@@ -142,15 +142,7 @@ const Patients = () => {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px 24px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <button onClick={(e) => { e.stopPropagation(); navigate(`/portais/${patient.id}`); }} style={{
-                                                    background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)',
-                                                    borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
-                                                    color: '#a78bfa', fontSize: '11px', fontWeight: '600',
-                                                    display: 'flex', alignItems: 'center', gap: '4px'
-                                                }}>
-                                                    <KeyRound size={13} /> Portais
-                                                </button>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
                                                 <ChevronRight size={18} color="var(--bloom-text-muted)" />
                                             </div>
                                         </td>
@@ -181,13 +173,6 @@ const Patients = () => {
                                             {patient.responsible_name || 'Sem responsável'} • {patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('pt-BR') : ''}
                                         </div>
                                     </div>
-                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/portais/${patient.id}`); }} style={{
-                                        background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)',
-                                        borderRadius: '8px', padding: '6px 8px', cursor: 'pointer',
-                                        color: '#a78bfa', flexShrink: 0
-                                    }}>
-                                        <KeyRound size={14} />
-                                    </button>
                                     <ChevronRight size={18} color="var(--bloom-text-muted)" style={{ flexShrink: 0 }} />
                                 </div>
                             ))}

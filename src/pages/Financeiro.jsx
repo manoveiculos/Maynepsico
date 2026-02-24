@@ -90,7 +90,7 @@ const Financeiro = () => {
     };
 
     const categories = {
-        receita: ['Sessão', 'Avaliação', 'Laudo', 'Supervisão', 'Outros'],
+        receita: ['Sessão', 'Unimed', 'SC Saúde', 'Particular', 'Avaliação', 'Laudo', 'Supervisão', 'Outros'],
         despesa: ['Aluguel', 'Material CRP', 'Marketing', 'Cursos', 'Software', 'Outros']
     };
 

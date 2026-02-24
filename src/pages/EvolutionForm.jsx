@@ -35,9 +35,9 @@ const EvolutionForm = () => {
     ];
 
     const techniquesList = [
-        'Análise do Comportamento (ABA)', 'Terapia Cognitivo-Comportamental',
+        'Avaliação Neuropsicológica', 'Terapia Cognitivo-Comportamental (TCC)',
         'Ludoterapia', 'Treino de Habilidades Sociais', 'Mediação de Conflitos',
-        'Reforço Positivo', 'Socioemocional'
+        'Reforço Positivo', 'Socioemocional', 'Análise do Comportamento (ABA)'
     ];
 
     useEffect(() => {

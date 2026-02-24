@@ -72,10 +72,10 @@ const Dashboard = () => {
             }}>
                 <div style={{ flex: '1 1 300px' }}>
                     <h1 style={{ fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: '800', marginBottom: '8px', color: 'white' }}>
-                        Olá, {profile?.full_name?.split(' ')[0] || 'Dra. Mayne'}! 🌸
+                        Olá, Dra. Mayne Margadona! 🌸
                     </h1>
                     <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-                        Aqui está o que está acontecendo no seu consultório hoje.
+                        CRP 12/29287 | Especialista em Neuropsicologia e TCC
                     </p>
                 </div>
                 <div style={{
@@ -238,11 +238,11 @@ const Dashboard = () => {
                             <h3 style={{ fontSize: '16px', fontWeight: '700' }}>Agenda</h3>
                         </div>
                         <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.5', marginBottom: '16px' }}>
-                            Você tem horários livres na Terça. Que tal abrir vagas para "Avaliação"? Aumente o faturamento em <strong>15%</strong>.
+                            Sua agenda de <strong>Quarta-feira</strong> está com alta demanda para Avaliações Neuropsicológicas.
                         </p>
                         <div style={{ padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', borderLeft: '3px solid #10b981' }}>
-                            <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginBottom: '2px' }}>Potencial</div>
-                            <div style={{ fontSize: '14px', fontWeight: '800' }}>+ {formatCurrency(850)} / sem</div>
+                            <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginBottom: '2px' }}>Foco Clínico</div>
+                            <div style={{ fontSize: '14px', fontWeight: '800' }}>Neuropsicologia & TCC</div>
                         </div>
                     </div>
                 </div>

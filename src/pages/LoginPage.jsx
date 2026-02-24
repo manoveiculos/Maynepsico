@@ -3,20 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
     ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles,
-    ArrowRight, AlertCircle, UserPlus, LogIn
+    AlertCircle, LogIn
 } from 'lucide-react';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { signIn, signUp } = useAuth();
-    const [isSignUp, setIsSignUp] = useState(false);
+    const { signIn } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
     const [form, setForm] = useState({
-        fullName: '',
         email: '',
         password: ''
     });
@@ -26,7 +23,6 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        setSuccess('');
         setLoading(true);
         setStatusMessage('Conectando...');
 
@@ -41,49 +37,32 @@ const LoginPage = () => {
                     await new Promise(r => setTimeout(r, 2000));
                 }
 
-                if (isSignUp) {
-                    setStatusMessage('Criando sua conta...');
-                    await signUp(form.email, form.password, form.fullName);
-                    setSuccess('Conta criada! Verifique seu email para confirmar o cadastro.');
-                    setIsSignUp(false);
-                    setLoading(false);
-                    setStatusMessage('');
-                    return;
-                } else {
-                    setStatusMessage(attempt > 1 ? 'Reconectando...' : 'Autenticando...');
-                    await signIn(form.email, form.password);
-                    navigate('/dashboard');
-                    return;
-                }
+                setStatusMessage(attempt > 1 ? 'Reconectando...' : 'Autenticando...');
+                await signIn(form.email, form.password);
+                navigate('/dashboard');
+                return;
             } catch (err) {
                 console.error(`Erro de login (tentativa ${attempt}):`, err);
                 const msg = (err.message || 'Erro inesperado').toLowerCase();
 
-                // Erros de rede/hibernação - tentar novamente
                 if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('timeout') || msg.includes('hibernação')) {
                     if (attempt < maxRetries) {
-                        continue; // Tenta novamente automaticamente
+                        continue;
                     }
                     setError('O banco de dados está acordando. Por favor, aguarde 10 segundos e clique em "Entrar" novamente.');
                 }
-                // Erros de autenticação - não tentar novamente
                 else if (msg.includes('invalid login')) {
                     setError('Email ou senha incorretos.');
-                } else if (msg.includes('already registered')) {
-                    setError('Este email já está cadastrado.');
-                } else if (msg.includes('email not confirmed')) {
-                    setError('Verifique seu email para confirmar o cadastro antes de entrar.');
                 } else {
                     setError(err.message || 'Erro ao conectar ao servidor.');
                 }
-                break; // Sai do loop para erros que não devem ser retentados
+                break;
             }
         }
 
         setLoading(false);
         setStatusMessage('');
     };
-
 
     const inputStyle = {
         width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px',
@@ -124,7 +103,7 @@ const LoginPage = () => {
                 </button>
 
                 {/* Card */}
-                <div className="login-card" style={{
+                <div style={{
                     background: 'rgba(30, 41, 59, 0.7)',
                     backdropFilter: 'blur(20px)',
                     borderRadius: '24px',
@@ -149,46 +128,15 @@ const LoginPage = () => {
                             onClick={() => navigate('/')}
                             style={{ fontSize: '26px', fontWeight: '700', fontFamily: 'Outfit', marginBottom: '8px', cursor: 'pointer' }}
                         >
-                            {isSignUp ? 'Criar Conta' : 'Bem-vinda de volta'}
+                            Bem-vinda, Dra. Mayne
                         </h1>
                         <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-                            {isSignUp
-                                ? 'Cadastre-se para acessar a plataforma'
-                                : 'Acesse o painel administrativo da Bloom'
-                            }
+                            Acesse o painel administrativo da Bloom
                         </p>
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                        {/* Name (sign up only) */}
-                        {isSignUp && (
-                            <div>
-                                <label style={{
-                                    display: 'block', fontSize: '12px', color: '#94a3b8',
-                                    fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase',
-                                    letterSpacing: '0.5px'
-                                }}>
-                                    Nome Completo
-                                </label>
-                                <div style={{ position: 'relative' }}>
-                                    <UserPlus size={18} style={{
-                                        position: 'absolute', left: '16px', top: '50%',
-                                        transform: 'translateY(-50%)', color: '#64748b'
-                                    }} />
-                                    <input
-                                        type="text"
-                                        value={form.fullName}
-                                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                                        placeholder="Dra. Mayne Margadona"
-                                        style={inputStyle}
-                                        onFocus={(e) => e.target.style.borderColor = 'rgba(139,92,246,0.4)'}
-                                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
                         {/* Email */}
                         <div>
                             <label style={{
@@ -282,18 +230,6 @@ const LoginPage = () => {
                             </div>
                         )}
 
-                        {/* Success */}
-                        {success && (
-                            <div style={{
-                                padding: '12px 16px', borderRadius: '10px',
-                                background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)',
-                                color: '#10b981', fontSize: '13px',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                <Sparkles size={16} /> {success}
-                            </div>
-                        )}
-
                         {/* Submit */}
                         <button
                             type="submit"
@@ -306,57 +242,23 @@ const LoginPage = () => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                                 opacity: loading ? 0.6 : 1,
                                 boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
-                                transition: 'all 0.2s', marginTop: '4px'
+                                transition: 'all 0.2s', marginTop: '12px'
                             }}
                         >
                             {loading ? (statusMessage || 'Processando...') : (
                                 <>
-                                    {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
-                                    {isSignUp ? 'Criar Conta' : 'Entrar'}
+                                    <LogIn size={18} />
+                                    Entrar
                                 </>
                             )}
                         </button>
                     </form>
 
-                    {/* Toggle sign up / sign in */}
-                    <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                        <p style={{ color: '#64748b', fontSize: '14px' }}>
-                            {isSignUp ? 'Já tem uma conta?' : 'Não tem conta?'}
-                            <button
-                                onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
-                                style={{
-                                    background: 'none', border: 'none', color: '#a78bfa',
-                                    fontWeight: '600', cursor: 'pointer', marginLeft: '6px',
-                                    fontSize: '14px'
-                                }}
-                            >
-                                {isSignUp ? 'Fazer login' : 'Cadastre-se'}
-                            </button>
+                    <div style={{ textAlign: 'center', marginTop: '32px' }}>
+                        <p style={{ color: '#475569', fontSize: '12px' }}>
+                            Acesso reservado. Dra. Mayne Margadona (CRP 12/29287)
                         </p>
                     </div>
-
-                    {/* Divider */}
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: '16px',
-                        margin: '28px 0 20px'
-                    }}>
-                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-                        <span style={{ fontSize: '12px', color: '#475569' }}>ou</span>
-                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-                    </div>
-
-                    {/* Portal access */}
-                    <button onClick={() => navigate('/portal')} style={{
-                        width: '100%', padding: '14px', borderRadius: '12px',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        color: '#94a3b8', fontSize: '14px', fontWeight: '500',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', gap: '8px',
-                        transition: 'all 0.2s'
-                    }}>
-                        Sou pai/aluno — Entrar com código <ArrowRight size={16} />
-                    </button>
                 </div>
             </div>
         </div>

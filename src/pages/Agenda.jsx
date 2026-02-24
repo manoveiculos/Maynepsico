@@ -3,17 +3,17 @@ import { dataService } from '../services/dataService';
 import { useAuth } from '../contexts/AuthContext';
 import {
     Calendar, Clock, Plus, ChevronLeft, ChevronRight, X, User,
-    CheckCircle, AlertCircle, Trash2, Edit3, MapPin
+    CheckCircle, AlertCircle, Trash2, Edit3, MapPin, MessageSquare
 } from 'lucide-react';
 
-const Agenda = () => {
+const Agenda = ({ defaultOpen = false }) => {
     const { user } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [appointments, setAppointments] = useState([]);
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] = useState(defaultOpen);
     const [editingAppointment, setEditingAppointment] = useState(null);
     const [viewMode, setViewMode] = useState('semana'); // 'dia', 'semana', 'mes'
 
@@ -27,6 +27,21 @@ const Agenda = () => {
         status: 'agendado',
         location: 'consultório'
     });
+
+    const serviceHours = {
+        1: { start: '13:00', end: '17:00' }, // Segunda
+        3: { start: '13:00', end: '22:00' }, // Quarta
+        4: { start: '13:00', end: '17:00' }, // Quinta
+        5: { start: '13:00', end: '17:00' }, // Sexta
+        6: { start: '08:00', end: '12:00' }, // Sábado
+    };
+
+    const isWithinServiceHours = (date, startTime) => {
+        const day = date.getDay();
+        const hours = serviceHours[day];
+        if (!hours) return false;
+        return startTime >= hours.start && startTime < hours.end;
+    };
 
     useEffect(() => {
         if (!user?.id) return; // Wait for user to be loaded
@@ -97,7 +112,12 @@ const Agenda = () => {
         timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
     }
 
-    const getPatientName = (id) => patients.find(p => p.id === id)?.name || 'Paciente';
+    const getPatientName = (appt) => {
+        if (appt.patient_id) {
+            return patients.find(p => p.id === appt.patient_id)?.name || 'Paciente';
+        }
+        return appt.patient_name_manual || 'Novo Paciente (Site)';
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -176,11 +196,10 @@ const Agenda = () => {
     };
 
     const sessionTypes = {
+        avaliacao: { label: 'Avaliação Neuropsicológica', color: '#f59e0b' },
+        tcc: { label: 'Terapia TCC', color: '#10b981' },
         individual: { label: 'Individual', color: '#8b5cf6' },
-        grupo: { label: 'Grupo', color: '#3b82f6' },
-        avaliacao: { label: 'Avaliação', color: '#f59e0b' },
-        devolutiva: { label: 'Devolutiva', color: '#10b981' },
-        supervisao: { label: 'Supervisão', color: '#06b6d4' },
+        devolutiva: { label: 'Devolutiva', color: '#06b6d4' },
     };
 
     const inputStyle = {
@@ -193,6 +212,61 @@ const Agenda = () => {
         display: 'block', fontSize: '12px', color: '#94a3b8',
         fontWeight: '600', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'
     };
+
+    const handleWhatsAppReminder = (appt) => {
+        const patient = patients.find(p => p.id === appt.patient_id);
+        const phone = (patient?.responsible_phone || appt.phone_manual)?.replace(/\D/g, '');
+        if (phone) {
+            const msg = window.encodeURIComponent(`Olá, aqui é da clínica Dra. Mayne. Confirmamos sua consulta para ${appt.date.split('-').reverse().join('/')} às ${appt.start_time}? CRP 12/29287`);
+            window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
+        } else {
+            alert('Telefone não cadastrado.');
+        }
+    };
+
+    const AppointmentItem = ({ appt, idx, total, onEdit, onDelete, onResend, patients, statusConfig, sessionTypes, getPatientName }) => {
+        const st = statusConfig[appt.status] || statusConfig.agendado;
+        const sType = sessionTypes[appt.session_type] || sessionTypes.individual;
+
+        return (
+            <div style={{
+                display: 'flex', gap: '16px', padding: '18px 20px',
+                borderBottom: idx < total - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                transition: 'background 0.2s', cursor: 'pointer'
+            }} className="appt-row-hover">
+                <div style={{ minWidth: '56px', flexShrink: 0 }}>
+                    <div style={{ fontSize: '16px', fontWeight: '700', color: '#a78bfa', fontFamily: 'Outfit' }}>{appt.start_time}</div>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>{appt.end_time}</div>
+                </div>
+                <div style={{ width: '3px', borderRadius: '100px', background: sType.color, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {getPatientName(appt)}
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '100px', background: st.bg, color: st.color, fontWeight: '700', textTransform: 'uppercase' }}>{st.label}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#94a3b8', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={12} /> {sType.label}</span>
+                        {appt.location && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {appt.location}</span>}
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                    <button onClick={onResend} title="Enviar lembrete WhatsApp" style={{ background: 'rgba(16,185,129,0.05)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: '#10b981' }}><MessageSquare size={14} /></button>
+                    <button onClick={() => onEdit(appt)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: '#94a3b8' }}><Edit3 size={14} /></button>
+                    <button onClick={() => onDelete(appt.id)} style={{ background: 'rgba(239,68,68,0.05)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={14} /></button>
+                </div>
+            </div>
+        );
+    };
+
+    const EmptyState = ({ onNew }) => (
+        <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+            <Calendar size={40} color="#334155" style={{ marginBottom: '16px' }} />
+            <p style={{ color: '#64748b', fontSize: '15px', marginBottom: '12px' }}>Nenhuma sessão agendada.</p>
+            <button className="btn-primary" onClick={onNew} style={{ margin: '0 auto', justifyContent: 'center', fontSize: '13px' }}>
+                <Plus size={16} /> Agendar sessão
+            </button>
+        </div>
+    );
 
     return (
         <div className="agenda-page animate-fade" style={{ padding: '24px 0' }}>
@@ -343,107 +417,114 @@ const Agenda = () => {
                         marginBottom: '16px'
                     }}>
                         <h2 style={{ fontSize: '18px', fontFamily: 'Outfit' }}>
-                            {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+                            {viewMode === 'dia' ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) :
+                                viewMode === 'semana' ? `Semana de ${weekDays[0].getDate()}/${weekDays[0].getMonth() + 1} a ${weekDays[6].getDate()}/${weekDays[6].getMonth() + 1}` :
+                                    `Mês de ${monthNames[currentDate.getMonth()]}`}
                         </h2>
                     </div>
 
-                    {/* Time slots */}
+                    {/* Content based on View Mode */}
                     <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
-                        {selectedDateAppointments.length === 0 ? (
-                            <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-                                <Calendar size={40} color="#334155" style={{ marginBottom: '16px' }} />
-                                <p style={{ color: '#64748b', fontSize: '15px', marginBottom: '12px' }}>
-                                    Nenhuma sessão agendada.
-                                </p>
-                                <button className="btn-primary" onClick={() => handleNewAppt(selectedDate)}
-                                    style={{ margin: '0 auto', justifyContent: 'center', fontSize: '13px' }}>
-                                    <Plus size={16} /> Agendar sessão
-                                </button>
-                            </div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                {selectedDateAppointments.map((appt, idx) => {
-                                    const st = statusConfig[appt.status] || statusConfig.agendado;
-                                    const sType = sessionTypes[appt.session_type] || sessionTypes.individual;
+                        {viewMode === 'dia' && (
+                            selectedDateAppointments.length === 0 ? (
+                                <EmptyState onNew={() => handleNewAppt(selectedDate)} />
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {selectedDateAppointments.map((appt, idx) => (
+                                        <AppointmentItem
+                                            key={appt.id}
+                                            appt={appt}
+                                            idx={idx}
+                                            total={selectedDateAppointments.length}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onResend={() => handleWhatsAppReminder(appt)}
+                                            patients={patients}
+                                            statusConfig={statusConfig}
+                                            sessionTypes={sessionTypes}
+                                            getPatientName={getPatientName}
+                                        />
+                                    ))}
+                                </div>
+                            )
+                        )}
 
+                        {viewMode === 'semana' && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                {weekDays.map(day => {
+                                    const dayAppts = getAppointmentsForDate(day).sort((a, b) => a.start_time.localeCompare(b.start_time));
+                                    const isSelected = isSameDay(day, selectedDate);
                                     return (
-                                        <div key={appt.id} style={{
-                                            display: 'flex', gap: '16px', padding: '18px 20px',
-                                            borderBottom: idx < selectedDateAppointments.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                                            transition: 'background 0.2s', cursor: 'pointer'
-                                        }}
-                                            className="appt-row-hover"
-                                        >
-                                            {/* Time */}
-                                            <div style={{ minWidth: '56px', flexShrink: 0 }}>
-                                                <div style={{ fontSize: '16px', fontWeight: '700', color: '#a78bfa', fontFamily: 'Outfit' }}>
-                                                    {appt.start_time}
-                                                </div>
-                                                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                    {appt.end_time}
-                                                </div>
-                                            </div>
-
-                                            {/* Color bar */}
+                                        <div key={day.toISOString()} style={{
+                                            borderRight: '1px solid rgba(255,255,255,0.04)', minHeight: '400px',
+                                            background: isSelected ? 'rgba(139,92,246,0.02)' : 'transparent'
+                                        }}>
                                             <div style={{
-                                                width: '3px', borderRadius: '100px',
-                                                background: sType.color, flexShrink: 0
-                                            }} />
-
-                                            {/* Content */}
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{
-                                                    fontWeight: '600', fontSize: '14px', marginBottom: '4px',
-                                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                                }}>
-                                                    {getPatientName(appt.patient_id)}
-                                                    <span style={{
-                                                        fontSize: '10px', padding: '2px 8px', borderRadius: '100px',
-                                                        background: st.bg, color: st.color, fontWeight: '700',
-                                                        textTransform: 'uppercase'
-                                                    }}>
-                                                        {st.label}
-                                                    </span>
-                                                </div>
-                                                <div style={{
-                                                    display: 'flex', gap: '12px', fontSize: '12px', color: '#94a3b8',
-                                                    flexWrap: 'wrap'
-                                                }}>
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <User size={12} /> {sType.label}
-                                                    </span>
-                                                    {appt.location && (
-                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <MapPin size={12} /> {appt.location}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {appt.notes && (
-                                                    <div style={{
-                                                        fontSize: '12px', color: '#64748b', marginTop: '6px',
-                                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                    }}>
-                                                        📝 {appt.notes}
-                                                    </div>
-                                                )}
+                                                padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                                background: isSelected ? 'rgba(139,92,246,0.05)' : 'rgba(255,255,255,0.02)'
+                                            }}>
+                                                <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', fontWeight: '700' }}>{dayNames[day.getDay()]}</div>
+                                                <div style={{ fontSize: '16px', fontWeight: '800', color: isSelected ? '#a78bfa' : 'white' }}>{day.getDate()}</div>
                                             </div>
+                                            <div style={{ padding: '4px' }}>
+                                                {dayAppts.map(appt => (
+                                                    <div
+                                                        key={appt.id}
+                                                        onClick={() => { setSelectedDate(day); handleEdit(appt); }}
+                                                        style={{
+                                                            padding: '6px', borderRadius: '6px', marginBottom: '4px', fontSize: '10px',
+                                                            background: (sessionTypes[appt.session_type] || sessionTypes.individual).color + '20',
+                                                            borderLeft: `3px solid ${(sessionTypes[appt.session_type] || sessionTypes.individual).color}`,
+                                                            cursor: 'pointer', overflow: 'hidden'
+                                                        }}
+                                                    >
+                                                        <div style={{ fontWeight: '700', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{appt.start_time} - {getPatientName(appt)}</div>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    onClick={() => handleNewAppt(day)}
+                                                    style={{
+                                                        width: '100%', padding: '6px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.05)',
+                                                        borderRadius: '6px', color: '#475569', cursor: 'pointer', fontSize: '10px'
+                                                    }}
+                                                >+ Novo</button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
 
-                                            {/* Actions */}
-                                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                                                <button onClick={() => handleEdit(appt)} style={{
-                                                    background: 'rgba(255,255,255,0.05)', border: 'none',
-                                                    borderRadius: '8px', padding: '8px', cursor: 'pointer',
-                                                    color: '#94a3b8'
-                                                }}>
-                                                    <Edit3 size={14} />
-                                                </button>
-                                                <button onClick={() => handleDelete(appt.id)} style={{
-                                                    background: 'rgba(239,68,68,0.05)', border: 'none',
-                                                    borderRadius: '8px', padding: '8px', cursor: 'pointer',
-                                                    color: '#ef4444'
-                                                }}>
-                                                    <Trash2 size={14} />
-                                                </button>
+                        {viewMode === 'mes' && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                {dayNames.map(d => (
+                                    <div key={d} style={{ padding: '10px', textAlign: 'center', fontSize: '11px', color: '#64748b', fontWeight: '700', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{d}</div>
+                                ))}
+                                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                                    <div key={`empty-mes-${i}`} style={{ aspectRatio: '1.2', borderRight: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }} />
+                                ))}
+                                {Array.from({ length: daysInMonth }).map((_, i) => {
+                                    const day = i + 1;
+                                    const thisDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                                    const appts = getAppointmentsForDate(thisDate);
+                                    const isToday = isSameDay(thisDate, today);
+                                    return (
+                                        <div
+                                            key={`mes-day-${day}`}
+                                            onClick={() => { setSelectedDate(thisDate); setViewMode('dia'); }}
+                                            style={{
+                                                aspectRatio: '1.2', borderRight: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)',
+                                                padding: '4px', cursor: 'pointer', background: isToday ? 'rgba(139,92,246,0.03)' : 'transparent',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            className="mes-cell-hover"
+                                        >
+                                            <div style={{ fontSize: '12px', fontWeight: '700', color: isToday ? '#a78bfa' : '#475569' }}>{day}</div>
+                                            <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                {appts.slice(0, 3).map(a => (
+                                                    <div key={a.id} style={{ width: '100%', height: '3px', borderRadius: '10px', background: (sessionTypes[a.session_type] || sessionTypes.individual).color }} />
+                                                ))}
+                                                {appts.length > 3 && <div style={{ fontSize: '8px', color: '#94a3b8' }}>+{appts.length - 3}</div>}
                                             </div>
                                         </div>
                                     );
@@ -453,7 +534,7 @@ const Agenda = () => {
                     </div>
 
                     {/* Quick add floating */}
-                    {selectedDateAppointments.length > 0 && (
+                    {(viewMode === 'dia' && selectedDateAppointments.length > 0) && (
                         <button onClick={() => handleNewAppt(selectedDate)} style={{
                             marginTop: '12px', width: '100%', padding: '14px', borderRadius: '12px',
                             border: '2px dashed rgba(139,92,246,0.2)', background: 'rgba(139,92,246,0.03)',
@@ -463,6 +544,18 @@ const Agenda = () => {
                             <Plus size={16} /> Adicionar sessão neste dia
                         </button>
                     )}
+                    {/* Policy Card */}
+                    <div className="premium-card" style={{ padding: '20px', marginTop: '20px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', marginBottom: '12px' }}>
+                            <AlertCircle size={18} />
+                            <h3 style={{ fontSize: '14px', fontWeight: '700' }}>Política de Faltas</h3>
+                        </div>
+                        <ul style={{ padding: 0, margin: 0, listStyle: 'none', fontSize: '12px', color: '#94a3b8', lineHeight: '1.6' }}>
+                            <li>• Cancelamentos com menos de 24h serão cobrados.</li>
+                            <li>• Avisar responsável 1 dia antes da consulta.</li>
+                            <li>• CRP: 12/29287 sempre visível nos documentos.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -525,6 +618,16 @@ const Agenda = () => {
                                         style={inputStyle} />
                                 </div>
                             </div>
+
+                            {form.date && form.start_time && !isWithinServiceHours(new Date(form.date + 'T12:00:00'), form.start_time) && (
+                                <div style={{
+                                    padding: '10px', background: 'rgba(245,158,11,0.1)',
+                                    borderRadius: '8px', borderLeft: '3px solid #f59e0b',
+                                    fontSize: '11px', color: '#f59e0b', fontWeight: '500'
+                                }}>
+                                    ⚠️ Atenção: Este horário está fora do padrão de atendimento definido.
+                                </div>
+                            )}
 
                             {/* Session type */}
                             <div>

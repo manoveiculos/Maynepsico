@@ -53,6 +53,19 @@ export const dataService = {
         });
     },
 
+    async getPrimaryPsychologist() {
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles_psico')
+                .select('id')
+                .limit(1)
+                .single();
+
+            if (error) throw error;
+            return data;
+        });
+    },
+
     // =============================================
     // PACIENTES
     // =============================================
